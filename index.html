@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C I B Y</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="titlebar">
+        <div class="titlebar-title"><span class="neon-text">CIBY</span> // EXTRACTOR</div>
+        <div class="titlebar-controls">
+            <button id="btn-minimize"><i class="fa-solid fa-minus"></i></button>
+            <button id="btn-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <div class="container">
+        <main class="core-panel">
+            <div class="header-section">
+                <h1 class="glitch" data-text="MEDIA PROTOCOL">MEDIA PROTOCOL</h1>
+                <p class="subtitle">YOUTUBE // SPOTIFY // SOUNDCLOUD</p>
+            </div>
+
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-link input-icon"></i>
+                    <input type="text" id="url-input" placeholder="ENTER TARGET URL..." autocomplete="off" spellcheck="false">
+                    <div class="input-glow"></div>
+                </div>
+            </div>
+
+            <div class="options-section">
+                <div class="format-toggle">
+                    <input type="radio" id="format-mp4" name="format" value="mp4" checked>
+                    <label for="format-mp4">MP4 [VIDEO]</label>
+                    <input type="radio" id="format-mp3" name="format" value="mp3">
+                    <label for="format-mp3">MP3 [AUDIO]</label>
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+
+            <button id="btn-analyze" class="cyber-button">
+                <span class="btn-text">INITIALIZE EXTRACTION</span>
+                <span class="btn-glitch"></span>
+            </button>
+
+            <div id="media-panel" class="media-panel hidden">
+                <div class="media-image-wrapper">
+                    <img id="media-thumbnail" src="" alt="Thumbnail">
+                    <div class="scanline"></div>
+                </div>
+                <div class="media-details">
+                    <h3 id="media-title">UNKNOWN ENTITY</h3>
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span id="media-status">TARGET ACQUIRED</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="progress-panel" class="progress-panel hidden">
+                <div class="progress-info">
+                    <span id="progress-text">DOWNLOADING...</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+            
+            <button id="btn-download" class="cyber-button red-glow hidden">
+                <span class="btn-text">EXECUTE DOWNLOAD</span>
+                <i class="fa-solid fa-download"></i>
+            </button>
+
+            <div id="system-log" class="system-log">
+                > SYSTEM READY...
+            </div>
+        </main>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
