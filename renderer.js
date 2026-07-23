@@ -19,11 +19,48 @@ const progressPercent = document.getElementById('progress-percent');
 const progressText = document.getElementById('progress-text');
 const systemLog = document.getElementById('system-log');
 
+const formatToggleVideo = document.getElementById('format-mp4');
+const formatToggleAudio = document.getElementById('format-mp3');
+const audioQualitySelector = document.getElementById('audio-quality-selector');
+const audioQualityDrop = document.getElementById('audio-quality');
+
+const btnCustomCover = document.getElementById('btn-custom-cover');
+const customCoverInput = document.getElementById('custom-cover-input');
+const customCoverSection = document.getElementById('custom-cover-section');
+
 let currentMediaUrl = '';
+let currentCustomCoverPath = null;
+let currentMediaTitle = '';
 
 function logSystem(msg) {
     systemLog.innerText = `> ${msg}`;
 }
+
+formatToggleVideo.addEventListener('change', () => {
+    audioQualitySelector.classList.add('hidden');
+    customCoverSection.classList.add('hidden');
+});
+
+formatToggleAudio.addEventListener('change', () => {
+    audioQualitySelector.classList.remove('hidden');
+    if (mediaPanel.classList.contains('hidden') === false) {
+        customCoverSection.classList.remove('hidden');
+    }
+});
+
+btnCustomCover.addEventListener('click', () => {
+    customCoverInput.click();
+});
+
+customCoverInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+        currentCustomCoverPath = e.target.files[0].path;
+        btnCustomCover.innerHTML = '<i class="fa-solid fa-check"></i> COVER LOADED';
+        btnCustomCover.style.color = '#0f0';
+        btnCustomCover.style.borderColor = '#0f0';
+        logSystem('CUSTOM COVER LOADED IN MEMORY.');
+    }
+});
 
 btnAnalyze.addEventListener('click', async () => {
     const url = urlInput.value.trim();
@@ -37,8 +74,15 @@ btnAnalyze.addEventListener('click', async () => {
     mediaPanel.classList.add('hidden');
     progressPanel.classList.add('hidden');
     btnDownload.classList.add('hidden');
+    customCoverSection.classList.add('hidden');
     btnAnalyze.disabled = true;
     btnAnalyze.querySelector('.btn-text').innerText = 'ANALYZING...';
+
+    currentCustomCoverPath = null;
+    customCoverInput.value = '';
+    btnCustomCover.innerHTML = '<i class="fa-solid fa-image"></i> INJECT CUSTOM COVER';
+    btnCustomCover.style.color = '';
+    btnCustomCover.style.borderColor = '';
 
     try {
         const info = await window.electronAPI.getMediaInfo(url);
@@ -48,12 +92,16 @@ btnAnalyze.addEventListener('click', async () => {
         }
 
         currentMediaUrl = url;
-        mediaTitle.innerText = info.title || 'UNKNOWN ENTITY';
+        currentMediaTitle = info.title || 'UNKNOWN ENTITY';
+        mediaTitle.innerText = currentMediaTitle;
         mediaThumbnail.src = info.thumbnail || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
         mediaStatus.innerText = info.isSpotify ? 'SPOTIFY TARGET ACQUIRED' : 'TARGET ACQUIRED';
         
         mediaPanel.classList.remove('hidden');
         btnDownload.classList.remove('hidden');
+        if (formatToggleAudio.checked) {
+            customCoverSection.classList.remove('hidden');
+        }
         logSystem('TARGET ACQUIRED SUCCESSFULLY.');
     } catch (err) {
         logSystem(`ERROR: ${err.message.substring(0, 50).toUpperCase()}`);
@@ -66,8 +114,10 @@ btnAnalyze.addEventListener('click', async () => {
 btnDownload.addEventListener('click', async () => {
     if (!currentMediaUrl) return;
 
-    const isMp3 = document.getElementById('format-mp3').checked;
-    const format = isMp3 ? 'mp3' : 'mp4';
+    let format = 'mp4';
+    if (formatToggleAudio.checked) {
+        format = audioQualityDrop.value; // 'mp3', 'flac', or 'wav'
+    }
 
     logSystem(`COMMENCING ${format.toUpperCase()} EXTRACTION...`);
     
@@ -89,7 +139,10 @@ btnDownload.addEventListener('click', async () => {
     try {
         const result = await window.electronAPI.downloadMedia({
             url: currentMediaUrl,
-            format: format
+            format: format,
+            customCoverPath: currentCustomCoverPath,
+            title: currentMediaTitle,
+            thumbnailUrl: mediaThumbnail.src
         });
 
         if (result.canceled) {

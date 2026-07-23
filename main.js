@@ -95,7 +95,9 @@ ipcMain.handle('get-media-info', async (event, url) => {
     }
 });
 
-ipcMain.handle('download-media', async (event, { url, format }) => {
+const NodeID3 = require('node-id3');
+
+ipcMain.handle('download-media', async (event, { url, format, customCoverPath, title, thumbnailUrl }) => {
     try {
         let targetUrl = url;
         let isSpotify = url.includes('spotify.com');
@@ -106,7 +108,7 @@ ipcMain.handle('download-media', async (event, { url, format }) => {
             targetUrl = `ytsearch1:${query}`;
         }
 
-        const defaultExtension = format === 'mp3' ? 'mp3' : 'mp4';
+        const defaultExtension = format === 'mp4' ? 'mp4' : format; // format is mp4, mp3, flac, wav
         const defaultPath = path.join(os.homedir(), 'Downloads', `download.${defaultExtension}`);
         
         const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
@@ -129,10 +131,16 @@ ipcMain.handle('download-media', async (event, { url, format }) => {
             ffmpegLocation: ffmpegStatic
         };
 
-        if (format === 'mp3') {
+        if (format !== 'mp4') {
             args.extractAudio = true;
-            args.audioFormat = 'mp3';
-            args.audioQuality = 0;
+            args.audioFormat = format;
+            if (format === 'mp3') {
+                args.audioQuality = 0;
+            }
+            if (!customCoverPath) {
+                args.embedThumbnail = true;
+                args.addMetadata = true;
+            }
         } else {
             args.format = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
             args.mergeOutputFormat = 'mp4';
@@ -150,6 +158,20 @@ ipcMain.handle('download-media', async (event, { url, format }) => {
         });
 
         await downloader;
+
+        // Custom Cover Injection for MP3
+        if (customCoverPath && format === 'mp3') {
+            try {
+                const tags = {
+                    title: title,
+                    artist: isSpotify ? title.split('-')[0].trim() : 'Unknown',
+                    image: customCoverPath
+                };
+                NodeID3.update(tags, filePath);
+            } catch (err) {
+                console.error("Cover injection failed:", err);
+            }
+        }
 
         return { success: true, filePath };
 
