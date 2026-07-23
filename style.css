@@ -410,3 +410,59 @@ body::after {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+#audio-quality {
+    width: 100%;
+    background: #050505;
+    color: var(--text-dim);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    outline: none;
+    cursor: pointer;
+    margin-bottom: 30px;
+    transition: all 0.3s;
+    appearance: none;
+}
+
+#audio-quality:focus {
+    border-color: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,0,60,0.2);
+}
+
+.audio-options {
+    position: relative;
+}
+
+.audio-options::after {
+    content: '\25BC';
+    position: absolute;
+    right: 15px;
+    top: 14px;
+    color: var(--accent-color);
+    pointer-events: none;
+    font-size: 12px;
+}
+
+.cyber-button-small {
+    background: transparent;
+    color: #fff;
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    font-family: var(--font-heading);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.cyber-button-small:hover {
+    border-color: var(--accent-color);
+    background: rgba(255,0,60,0.1);
+}
