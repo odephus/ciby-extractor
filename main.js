@@ -3,6 +3,7 @@ const path = require('path');
 const os = require('os');
 const ytDlpExec = require('yt-dlp-exec');
 const ffmpegStatic = require('ffmpeg-static');
+const { autoUpdater } = require('electron-updater');
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args)).catch(() => globalThis.fetch(...args));
 const spotifyUrlInfo = require('spotify-url-info')(globalThis.fetch);
@@ -27,6 +28,20 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  
+  autoUpdater.checkForUpdatesAndNotify();
+
+  autoUpdater.on('update-available', () => {
+    if (mainWindow) mainWindow.webContents.send('update-message', 'GÜNCELLEME BULUNDU, İNDİRİLİYOR...');
+  });
+  
+  autoUpdater.on('update-downloaded', () => {
+    if (mainWindow) mainWindow.webContents.send('update-message', 'GÜNCELLEME HAZIR, YENİDEN BAŞLATILIYOR...');
+    setTimeout(() => {
+      autoUpdater.quitAndInstall();
+    }, 3000);
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -128,7 +143,7 @@ ipcMain.handle('download-media', async (event, { url, format, customCoverPath, t
             noCallHome: true,
             noCheckCertificate: true,
             output: filePath,
-            ffmpegLocation: ffmpegStatic
+            ffmpegLocation: ffmpegStatic.includes('app.asar') ? ffmpegStatic.replace('app.asar', 'app.asar.unpacked') : ffmpegStatic
         };
 
         if (format !== 'mp4') {

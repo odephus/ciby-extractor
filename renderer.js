@@ -36,6 +36,10 @@ function logSystem(msg) {
     systemLog.innerText = `> ${msg}`;
 }
 
+window.electronAPI.onUpdateMessage((msg) => {
+    logSystem(msg);
+});
+
 formatToggleVideo.addEventListener('change', () => {
     audioQualitySelector.classList.add('hidden');
     customCoverSection.classList.add('hidden');
