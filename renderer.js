@@ -25,12 +25,18 @@ const audioQualitySelector = document.getElementById('audio-quality-selector');
 const audioQualityDrop = document.getElementById('audio-quality');
 
 const btnCustomCover = document.getElementById('btn-custom-cover');
-const customCoverInput = document.getElementById('custom-cover-input');
+const btnCancel = document.getElementById('btn-cancel');
 const customCoverSection = document.getElementById('custom-cover-section');
 
 let currentMediaUrl = '';
-let currentCustomCoverPath = null;
 let currentMediaTitle = '';
+let downloading = false;
+
+function setBusy(busy) {
+    for (const control of [urlInput, btnAnalyze, btnDownload, btnCustomCover, formatToggleVideo, formatToggleAudio, audioQualityDrop]) {
+        control.disabled = busy;
+    }
+}
 
 function logSystem(msg) {
     systemLog.innerText = `> ${msg}`;
@@ -47,22 +53,29 @@ formatToggleVideo.addEventListener('change', () => {
 
 formatToggleAudio.addEventListener('change', () => {
     audioQualitySelector.classList.remove('hidden');
-    if (mediaPanel.classList.contains('hidden') === false) {
+    if (!mediaPanel.classList.contains('hidden') && audioQualityDrop.value === 'mp3') {
         customCoverSection.classList.remove('hidden');
     }
 });
 
-btnCustomCover.addEventListener('click', () => {
-    customCoverInput.click();
+audioQualityDrop.addEventListener('change', () => {
+    customCoverSection.classList.toggle('hidden', mediaPanel.classList.contains('hidden') || audioQualityDrop.value !== 'mp3');
 });
 
-customCoverInput.addEventListener('change', (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-        currentCustomCoverPath = e.target.files[0].path;
+btnCustomCover.addEventListener('click', async () => {
+    setBusy(true);
+    try {
+        const result = await window.electronAPI.chooseCover();
+        if (result.error) throw new Error(result.error);
+        if (result.canceled) return;
         btnCustomCover.innerHTML = '<i class="fa-solid fa-check"></i> COVER LOADED';
         btnCustomCover.style.color = '#0f0';
         btnCustomCover.style.borderColor = '#0f0';
         logSystem('CUSTOM COVER LOADED IN MEMORY.');
+    } catch (err) {
+        logSystem(`ERROR: ${err.message}`);
+    } finally {
+        setBusy(false);
     }
 });
 
@@ -79,11 +92,10 @@ btnAnalyze.addEventListener('click', async () => {
     progressPanel.classList.add('hidden');
     btnDownload.classList.add('hidden');
     customCoverSection.classList.add('hidden');
-    btnAnalyze.disabled = true;
+    setBusy(true);
     btnAnalyze.querySelector('.btn-text').innerText = 'ANALYZING...';
 
-    currentCustomCoverPath = null;
-    customCoverInput.value = '';
+    currentMediaUrl = '';
     btnCustomCover.innerHTML = '<i class="fa-solid fa-image"></i> INJECT CUSTOM COVER';
     btnCustomCover.style.color = '';
     btnCustomCover.style.borderColor = '';
@@ -103,15 +115,33 @@ btnAnalyze.addEventListener('click', async () => {
         
         mediaPanel.classList.remove('hidden');
         btnDownload.classList.remove('hidden');
-        if (formatToggleAudio.checked) {
+        if (formatToggleAudio.checked && audioQualityDrop.value === 'mp3') {
             customCoverSection.classList.remove('hidden');
         }
         logSystem('TARGET ACQUIRED SUCCESSFULLY.');
     } catch (err) {
-        logSystem(`ERROR: ${err.message.substring(0, 50).toUpperCase()}`);
+        logSystem(`ERROR: ${err.message}`);
     } finally {
-        btnAnalyze.disabled = false;
+        setBusy(false);
         btnAnalyze.querySelector('.btn-text').innerText = 'INITIALIZE EXTRACTION';
+    }
+});
+
+window.electronAPI.onDownloadProgress(({ phase, percent }) => {
+    if (!downloading || btnCancel.disabled) return;
+    progressText.innerText = phase === 'processing' ? 'PROCESSING...' : 'DOWNLOADING STREAM...';
+    progressPercent.innerText = Number.isFinite(percent) ? `${percent.toFixed(1)}%` : '';
+    progressBar.style.width = Number.isFinite(percent) ? `${percent}%` : '0%';
+});
+
+btnCancel.addEventListener('click', async () => {
+    btnCancel.disabled = true;
+    progressText.innerText = 'CANCELLING...';
+    try {
+        await window.electronAPI.cancelDownload();
+    } catch (err) {
+        logSystem(`ERROR: ${err.message}`);
+        btnCancel.disabled = false;
     }
 });
 
@@ -124,6 +154,10 @@ btnDownload.addEventListener('click', async () => {
     }
 
     logSystem(`COMMENCING ${format.toUpperCase()} EXTRACTION...`);
+    downloading = true;
+    setBusy(true);
+    btnCancel.disabled = false;
+    btnCancel.classList.remove('hidden');
     
     btnDownload.classList.add('hidden');
     progressPanel.classList.remove('hidden');
@@ -131,23 +165,8 @@ btnDownload.addEventListener('click', async () => {
     progressPercent.innerText = '0%';
     progressText.innerText = 'EXTRACTING...';
 
-    window.electronAPI.onDownloadProgress((percent) => {
-        progressBar.style.width = `${percent}%`;
-        progressPercent.innerText = `${percent.toFixed(1)}%`;
-        if (percent > 0 && percent < 100) {
-            progressText.innerText = 'DOWNLOADING...';
-            logSystem(`DOWNLOADING... ${percent.toFixed(1)}%`);
-        }
-    });
-
     try {
-        const result = await window.electronAPI.downloadMedia({
-            url: currentMediaUrl,
-            format: format,
-            customCoverPath: currentCustomCoverPath,
-            title: currentMediaTitle,
-            thumbnailUrl: mediaThumbnail.src
-        });
+        const result = await window.electronAPI.downloadMedia(format);
 
         if (result.canceled) {
             logSystem('OPERATION ABORTED BY USER.');
@@ -165,18 +184,15 @@ btnDownload.addEventListener('click', async () => {
         progressPercent.innerText = '100%';
         logSystem(`SUCCESS. SAVED TO: ${result.filePath}`);
         
-        setTimeout(() => {
-            progressPanel.classList.add('hidden');
-            btnDownload.classList.remove('hidden');
-            btnDownload.querySelector('.btn-text').innerText = 'EXECUTE AGAIN';
-        }, 3000);
+        btnDownload.querySelector('.btn-text').innerText = 'EXECUTE AGAIN';
 
     } catch (err) {
         progressText.innerText = 'ERROR';
-        logSystem(`ERROR: ${err.message.substring(0, 50).toUpperCase()}`);
-        setTimeout(() => {
-            progressPanel.classList.add('hidden');
-            btnDownload.classList.remove('hidden');
-        }, 3000);
+        logSystem(`ERROR: ${err.message}`);
+    } finally {
+        downloading = false;
+        btnCancel.classList.add('hidden');
+        btnDownload.classList.remove('hidden');
+        setBusy(false);
     }
 });

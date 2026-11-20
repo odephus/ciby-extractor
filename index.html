@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src data: https://*.ytimg.com https://*.sndcdn.com https://*.ggpht.com; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'">
+    <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CIBY</title>
     <link rel="stylesheet" href="style.css">
@@ -67,7 +69,6 @@
                         <span id="media-status">TARGET ACQUIRED</span>
                     </div>
                     <div class="custom-cover-section hidden" id="custom-cover-section">
-                        <input type="file" id="custom-cover-input" accept="image/*" class="hidden">
                         <button id="btn-custom-cover" class="cyber-button-small">
                             <i class="fa-solid fa-image"></i> INJECT CUSTOM COVER
                         </button>
@@ -83,6 +84,7 @@
                 <div class="progress-bar-container">
                     <div id="progress-bar" class="progress-bar"></div>
                 </div>
+                <button id="btn-cancel" class="cyber-button-small hidden">CANCEL DOWNLOAD</button>
             </div>
             
             <button id="btn-download" class="cyber-button red-glow hidden">

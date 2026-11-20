@@ -67,7 +67,7 @@ Bu işlem birkaç dakika sürebilir. İşlem bittikten sonra proje klasörünün
 * `electron` - The core framework.
 * `yt-dlp-exec` - The extraction engine.
 * `ffmpeg-static` - Audio processing module.
-* `node-id3` - MP3 cover & metadata injection.
+* The bundled FFmpeg also embeds custom PNG or JPEG artwork in MP3 files.
 * `spotify-url-info` - Target acquisition for Spotify links.
 * `electron-builder` - Installer creation system.
 
